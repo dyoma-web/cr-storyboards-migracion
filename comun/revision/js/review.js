@@ -415,7 +415,8 @@
   }
   function onMove(e) {
     if (S.mode !== 'comment' && S.mode !== 'hide') return;
-    if (pop || inReviewUI(e.target)) { hoverBox.hidden = true; return; }
+    // Sobre la interfaz de revisión (incluida la capa del video) nunca se muestra el cursor de zona bloqueada.
+    if (pop || inReviewUI(e.target)) { hoverBox.hidden = true; document.body.classList.remove('rv-out'); return; }
     const el = pickTarget(e.target);
     document.body.classList.toggle('rv-out', !!SCOPE && !el);
     if (!el) { hoverBox.hidden = true; return; }
