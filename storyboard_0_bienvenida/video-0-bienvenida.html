@@ -141,7 +141,7 @@
   <section class="video" id="animatico">
     <div class="cab"><span class="teja"><i style="background:var(--navy)"></i><b>▶</b></span><div><p class="rotulo">Animático · 1:12</p><h3>Ejemplo del video</h3></div></div>
     <p class="nota">Las siete viñetas con movimientos de cámara sencillos, textos en pantalla y voces de prueba. Dura menos que el 1:30 del guion porque sigue el ritmo real de la locución.</p>
-    <iframe src="../animatico_0_bienvenida/index.html" title="Animático del video de bienvenida" loading="lazy" allow="autoplay; fullscreen" allowfullscreen></iframe>
+    <iframe id="video-animatico" src="../animatico_0_bienvenida/index.html" title="Animático del video de bienvenida" loading="lazy" allow="autoplay; fullscreen" allowfullscreen></iframe>
   </section>
 </main>
 
@@ -168,7 +168,9 @@
     accent: '#CDAA66',
     font: "'Baskervville', serif",
     trato: 'usted',            // Costa Rica: siempre de usted
-    locale: 'es-CR'
+    locale: 'es-CR',
+    scope: '.objetivo, .vineta, .video',   // solo se comenta el storyboard, no la portada ni el fondo
+    media: '#video-animatico'              // el video guarda el segundo de cada comentario
   };
 </script>
 <script src="../comun/revision/js/review.js" defer></script>

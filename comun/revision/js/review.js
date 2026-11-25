@@ -17,7 +17,9 @@
      css,                 // ruta de review.css (opcional)
      accent, font,        // color de acento y tipografía de títulos (opcional)
      trato,               // 'vos' (por defecto, Argentina) o 'usted' (Costa Rica, Colombia…)
-     locale               // formato de fechas: 'es-AR' por defecto, 'es-CR', 'es-CO'…
+     locale,              // formato de fechas: 'es-AR' por defecto, 'es-CR', 'es-CO'…
+     scope,               // selector CSS: solo se puede comentar dentro de esos elementos (opcional)
+     media                // selector de los <iframe> con video que hablan el protocolo rv-media (opcional)
    };
    ========================================================================== */
 (function () {
@@ -341,6 +343,7 @@
     }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'open', 'class', 'data-rv-hidden'] });
     setInterval(schedulePins, 1200);
     renderPanel();
+    initMedia();
   }
 
   function toast(msg) {
@@ -364,14 +367,20 @@
     hintEl.hidden = !m;
     if (m) hintEl.textContent = HINTS[m];
     hoverBox.hidden = true;
+    document.body.classList.remove('rv-out');
+    layoutCatch();
   }
   function inReviewUI(el) { return !!(el && el.closest && el.closest('#rv-root, .rv-ghost')); }
+  // Zona comentable: con RV_REVIEW.scope solo se puede señalar lo que está dentro de esos elementos.
+  const SCOPE = CFG.scope || '';
+  function inScope(el) { if (!SCOPE) return true; try { return !!el.closest(SCOPE); } catch (e) { return true; } }
   function pickTarget(el) {
     if (!el || el.nodeType !== 1) el = el && el.parentElement;
     if (!el) return null;
     const svg = el.closest('svg');
     if (svg) el = svg.parentElement || svg;
     if (el === document.body || el === document.documentElement) return null;
+    if (!inScope(el)) return null;
     return el;
   }
   function describe(el) {
@@ -388,6 +397,7 @@
     if (S.mode !== 'comment' && S.mode !== 'hide') return;
     if (pop || inReviewUI(e.target)) { hoverBox.hidden = true; return; }
     const el = pickTarget(e.target);
+    document.body.classList.toggle('rv-out', !!SCOPE && !el);
     if (!el) { hoverBox.hidden = true; return; }
     const r = el.getBoundingClientRect();
     Object.assign(hoverBox.style, { left: r.left - 3 + 'px', top: r.top - 3 + 'px', width: r.width + 6 + 'px', height: r.height + 6 + 'px' });
@@ -467,7 +477,7 @@
     if (S.els.has(c.id)) return S.els.get(c.id);
     let el = null;
     try { el = c.selector ? document.querySelector(c.selector) : null; } catch (e) { el = null; }
-    const want = norm(c.snippet).slice(0, 40);
+    const want = c.media_t != null ? '' : norm(c.snippet).slice(0, 40);
     if (want && (!el || !norm(snippetOf(el)).startsWith(want.slice(0, 24)))) {
       const tag = ((c.selector || '').split('>').pop().trim().match(/^[a-z0-9]+/) || ['*'])[0];
       const cand = $$(tag === 'body' ? '*' : tag).find((x) => !inReviewUI(x) && norm(snippetOf(x)).startsWith(want.slice(0, 24)));
@@ -479,6 +489,109 @@
   function isShown(el) {
     if (!el || !el.isConnected || el.closest('[data-rv-hidden]')) return false;
     return el.getClientRects().length > 0;
+  }
+
+  /* ---------- Video y otros medios con línea de tiempo ----------
+     Un comentario hecho sobre un video guarda el segundo (media_t) además del punto de la imagen.
+     El reproductor vive en un <iframe> y se comunica por postMessage con mensajes { rvMedia: 1, … }:
+       reproductor → hub   { type: 'state', t, dur, paused, cuts: [segundos], need, stage: { x, y, w, h } }
+                           { type: 'marker', id }            (clic en una marca de la barra de tiempo)
+       hub → reproductor   { cmd: 'hello' } · { cmd: 'pause' } · { cmd: 'seek', t, pause }
+                           { cmd: 'markers', items: [{ id, t, num, color, label }] }
+     `cuts` son los cambios grandes de imagen; `stage` es la zona de la imagen dentro del marco, en fracciones.
+     El pin de cada comentario se ve solo durante su plano: desde poco antes de su segundo hasta el siguiente corte. */
+  const MEDIA = new Map();
+  const MEDIA_LEAD = 1.5, MEDIA_MIN = 4;
+  const clock = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+  const mediaEls = () => { try { return CFG.media ? $$(CFG.media) : []; } catch (e) { return []; } };
+  function mediaPost(el, msg) { try { el.contentWindow.postMessage(Object.assign({ rvMedia: 1 }, msg), '*'); } catch (e) { /* marco no disponible */ } }
+  function initMedia() {
+    if (!CFG.media) return;
+    window.addEventListener('message', (e) => {
+      const d = e.data;
+      if (!d || d.rvMedia !== 1) return;
+      const el = mediaEls().find((f) => f.contentWindow === e.source);
+      if (!el) return;
+      if (d.type === 'state') {
+        const g = d.stage || {};
+        MEDIA.set(el, {
+          t: +d.t || 0, dur: +d.dur || 0, paused: !!d.paused,
+          cuts: Array.isArray(d.cuts) ? d.cuts.map(Number).filter((n) => n >= 0).sort((a, b) => a - b) : [],
+          stage: { x: +g.x || 0, y: +g.y || 0, w: +g.w || 1, h: +g.h || 1 }
+        });
+        if (d.need) syncMarkers();
+        markNow(); schedulePins();
+      } else if (d.type === 'marker' && S.all.some((c) => c.id === d.id)) { openPanel(); showDetail(d.id, true); }
+    });
+    mediaEls().forEach((el) => {
+      mediaPost(el, { cmd: 'hello' });
+      el.addEventListener('load', () => { MEDIA.delete(el); mediaPost(el, { cmd: 'hello' }); });
+    });
+  }
+  function stageRect(el) {
+    const st = MEDIA.get(el);
+    if (!st) return null;
+    const r = el.getBoundingClientRect();
+    return { left: r.left + st.stage.x * r.width, top: r.top + st.stage.y * r.height, width: st.stage.w * r.width, height: st.stage.h * r.height };
+  }
+  // Tramo en que se ve un comentario hecho en el segundo t: su plano, con un mínimo de lectura.
+  function mediaWindow(t, st) {
+    let a = 0, b = st.dur || Infinity;
+    for (const k of st.cuts) { if (k <= t + 0.05) a = Math.max(a, k); else { b = Math.min(b, k); break; } }
+    let from = Math.max(a, t - MEDIA_LEAD);
+    if (b - from < MEDIA_MIN) from = Math.max(a, b - MEDIA_MIN);
+    return [from, b];
+  }
+  function mediaOn(c, el) {
+    const st = MEDIA.get(el);
+    if (!st) return false;
+    const w = mediaWindow(c.media_t, st);
+    return st.t >= w[0] - 0.05 && st.t < w[1];
+  }
+  function syncMarkers() {
+    const css = getComputedStyle(document.documentElement);
+    for (const el of MEDIA.keys()) {
+      const items = S.all.filter((c) => c.page === PAGE && c.media_t != null && (S.showResolved || c.status !== 'resuelto') && locate(c) === el)
+        .map((c) => ({ id: c.id, t: c.media_t, num: c.num, color: css.getPropertyValue('--k-' + c.kind).trim() || '#5B6978',
+          label: `#${c.num} · ${kindOf(c.kind).t} — ${c.author_name}: ${(c.proposal || c.body || '').slice(0, 90)}` }));
+      mediaPost(el, { cmd: 'markers', items });
+    }
+  }
+  // Resalta en el panel los comentarios del plano que se está viendo.
+  function markNow() {
+    if (!panel) return;
+    $$('.rv-card[data-media]', panel).forEach((b) => {
+      const c = S.all.find((x) => x.id === b.dataset.id);
+      const el = c && c.page === PAGE ? locate(c) : null;
+      b.classList.toggle('is-now', !!(el && mediaOn(c, el)));
+    });
+  }
+  // En modo comentario, una capa sobre la imagen del video recibe el clic (los clics dentro de un iframe no llegan a la página).
+  function layoutCatch() {
+    if (!root) return;
+    const els = S.mode === 'comment' && !pop ? [...MEDIA.keys()].filter((el) => el.isConnected && isShown(el)) : [];
+    $$('.rv-media-catch', root).forEach((d) => { if (!els.includes(d._el)) d.remove(); });
+    for (const el of els) {
+      let d = $$('.rv-media-catch', root).find((x) => x._el === el);
+      if (!d) {
+        d = document.createElement('div');
+        d.className = 'rv-media-catch';
+        d._el = el;
+        d.innerHTML = '<span class="rv-hover-label"></span>';
+        d.addEventListener('click', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          const st = MEDIA.get(el), r = stageRect(el);
+          if (!st || !r) return;
+          mediaPost(el, { cmd: 'pause' });
+          openComposer({ el, kind: null, mediaT: Math.round(st.t * 10) / 10, relX: (e.clientX - r.left) / Math.max(r.width, 1), relY: (e.clientY - r.top) / Math.max(r.height, 1), x: e.clientX, y: e.clientY });
+          layoutCatch();
+        });
+        root.appendChild(d);
+      }
+      const r = stageRect(el);
+      Object.assign(d.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+      d.firstChild.textContent = 'Video · ' + clock(MEDIA.get(el).t);
+    }
   }
 
   /* ---------- Pines ---------- */
@@ -505,17 +618,22 @@
       p.setAttribute('aria-label', `Comentario ${c.num}: ${kindOf(c.kind).t}`);
       const el = locate(c);
       if (!isShown(el)) { p.hidden = true; continue; }
-      const r = el.getBoundingClientRect();
+      const isMedia = c.media_t != null;
+      const r = isMedia ? stageRect(el) : el.getBoundingClientRect();
+      if (!r) { p.hidden = true; continue; }
+      p.classList.toggle('is-media', isMedia);
+      p.classList.toggle('is-off', isMedia && !mediaOn(c, el));
       const x = r.left + Math.min(Math.max(c.rel_x ?? 0, 0), 1) * r.width;
       const y = r.top + Math.min(Math.max(c.rel_y ?? 0, 0), 1) * r.height;
       p.hidden = y < -40 || y > innerHeight + 40;
       p.style.left = x + 'px';
       p.style.top = y + 'px';
     }
+    layoutCatch();
   }
 
   /* ---------- Compositor (post-it) ---------- */
-  function closePop() { if (pop) { pop.remove(); pop = null; } }
+  function closePop() { if (pop) { pop.remove(); pop = null; layoutCatch(); } }
   function placePop(x, y) {
     const w = pop.offsetWidth, h = pop.offsetHeight;
     let left = Math.min(Math.max(12, x + 14), innerWidth - w - 12);
@@ -533,7 +651,7 @@
     pop.setAttribute('aria-label', 'Nuevo comentario');
     pop.innerHTML = `<form class="rv-pop-in">
       <div class="rv-pop-head"><span class="rv-h" style="font-size:15px">${isSug ? 'Proponer otra redacción' : o.general ? 'Opinión general sobre esta página' : 'Nuevo comentario'}</span><button type="button" class="rv-x" data-close aria-label="Cerrar" style="width:30px;height:30px;background:transparent;border-color:rgba(11,26,42,.12)">${ic('x')}</button></div>
-      <div class="rv-pop-target">${ic('target')} ${o.general ? 'Toda la página: ' + esc(PAGE_TITLE) : esc(describe(o.el))}</div>
+      <div class="rv-pop-target">${ic('target')} ${o.general ? 'Toda la página: ' + esc(PAGE_TITLE) : o.mediaT != null ? 'Video · ' + clock(o.mediaT) : esc(describe(o.el))}</div>
       ${isSug ? `<div class="rv-label">Texto actual</div><p class="rv-quote">${esc(o.quote)}</p>
         <label class="rv-label" for="rv-prop">Nueva redacción</label><textarea id="rv-prop" class="rv-ta" required>${esc(o.quote)}</textarea>
         <label class="rv-label" for="rv-body">Por qué (opcional)</label><textarea id="rv-body" class="rv-ta" style="min-height:56px"></textarea>`
@@ -560,7 +678,8 @@
       try {
         const c = await rpc('review_add_comment', { p_code: S.code, p: {
           page: PAGE, page_title: PAGE_TITLE, selector: selectorFor(o.el), rel_x: o.relX, rel_y: o.relY,
-          snippet: snippetOf(o.el), viewport_w: innerWidth, kind, body, quote: o.quote || null, proposal,
+          snippet: o.mediaT != null ? 'Video · ' + clock(o.mediaT) : snippetOf(o.el), media_t: o.mediaT != null ? o.mediaT : null,
+          viewport_w: innerWidth, kind, body, quote: o.quote || null, proposal,
           author_id: S.me.id, author_name: S.me.name, author_color: S.me.color, version: VERSION
         } });
         c.replies = []; c.voters = [];
@@ -637,7 +756,7 @@
     const a = document.activeElement;
     const typingInDetail = S.view === 'detail' && panel && panel.contains(a) && /TEXTAREA|INPUT/.test(a.tagName);
     if (!typingInDetail && !(S.view === 'detail' && (S.editing || S.resolving))) renderPanel();
-    layoutPins(); updateCount();
+    layoutPins(); updateCount(); syncMarkers();
   }
   function updateCount() {
     const n = S.all.filter((c) => c.page === PAGE && c.status !== 'resuelto').length;
@@ -719,8 +838,8 @@
       <div class="rv-list">${list.length ? list.map((c) => {
         const voted = c.voters.some((v) => v.id === S.me.id);
         const placed = c.page !== PAGE || isShown(locate(c));
-        return `<button type="button" class="rv-card${c.status === 'resuelto' ? ' is-resolved' : ''}" data-id="${c.id}">
-          <div class="rv-card-top">${badge(c)}<span class="rv-badge"><i style="background:${kindOf(c.kind).c}"></i>${kindOf(c.kind).t}</span><span class="rv-badge rv-st-${c.status}">${STATUS[c.status]}</span><span style="margin-left:auto">${esc(ago(c.created_at))}</span></div>
+        return `<button type="button" class="rv-card${c.status === 'resuelto' ? ' is-resolved' : ''}" data-id="${c.id}"${c.media_t != null ? ' data-media' : ''}>
+          <div class="rv-card-top">${badge(c)}<span class="rv-badge"><i style="background:${kindOf(c.kind).c}"></i>${kindOf(c.kind).t}</span><span class="rv-badge rv-st-${c.status}">${STATUS[c.status]}</span>${c.media_t != null ? `<span class="rv-badge rv-time" title="Momento del video">${clock(c.media_t)}</span>` : ''}<span style="margin-left:auto">${esc(ago(c.created_at))}</span></div>
           <p class="rv-card-body">${c.kind === 'redaccion' ? diff(c) : esc(c.body)}</p>
           <div class="rv-card-foot">
             <span class="rv-av rv-av-sm" style="background:${esc(c.author_color || '#5B6978')}">${esc(initials(c.author_name))}</span>${esc(c.author_name)}
@@ -734,6 +853,7 @@
     $('[data-status]', panel).value = S.status;
     $('[data-sort]', panel).value = S.sort;
     renderPresence();
+    markNow();
     $('[data-close]', panel).onclick = () => togglePanel(false);
     $$('[data-tab]', panel).forEach((b) => b.onclick = () => { S.tab = b.dataset.tab; renderPanel(); });
     $$('[data-fk]', panel).forEach((b) => b.onclick = () => {
@@ -750,7 +870,12 @@
     if (keepFocus) { const nq = $('#rv-q', panel); nq.focus(); nq.setSelectionRange(nq.value.length, nq.value.length); }
     $$('.rv-card', panel).forEach((b) => b.onclick = () => showDetail(b.dataset.id));
   }
-  function showDetail(id) { S.view = 'detail'; S.detail = id; S.resolving = false; S.editing = false; renderPanel(); layoutPins(); }
+  function showDetail(id, noSeek) {
+    S.view = 'detail'; S.detail = id; S.resolving = false; S.editing = false; renderPanel(); layoutPins();
+    // Un comentario de video lleva el reproductor a su momento y lo deja en pausa para leerlo con calma.
+    const c = S.all.find((x) => x.id === id);
+    if (!noSeek && c && c.media_t != null && c.page === PAGE) { const el = locate(c); if (el && MEDIA.has(el)) mediaPost(el, { cmd: 'seek', t: c.media_t, pause: true }); }
+  }
   function renderDetail() {
     const c = S.all.find((x) => x.id === S.detail);
     if (!c) { S.view = 'list'; return renderPanel(); }

@@ -6,6 +6,8 @@
   const E = { e1: 0, e2: 8.2, e3: 15.8, e4: 26.6, e5: 45.2, e6: 62.2, e7: 67.6 }, FIN = 72;
   const VOZ = { g1: 1.0, g2: 3.4, m1: 10.8, g3: 16.8, g4: 20.3, g5: 27.8, g6: 38.6, g7: 46.2, g8: 54.1, g9: 63.2 };
   const D = window.AUDIO || {};
+  /* Cambios grandes de imagen o personajes: el inicio de cada escena, la entrada de las siluetas y la de los bloques. */
+  const planos = [E.e2, E.e3, VOZ.g3 - 0.3, E.e4, E.e5, VOZ.g8 + 0.2, E.e6, E.e7];
   const audios = Object.keys(VOZ).filter((id) => D[id]).map((id) => ({ t: VOZ[id], dur: D[id], src: 'audio/' + id + '.mp3' }));
   const fin = (id) => VOZ[id] + (D[id] || 4) + 0.25;
   const parte = (id, fr) => VOZ[id] + (D[id] || 4) * fr;            // reparte una pista larga entre varios subtítulos
@@ -88,5 +90,5 @@
     tl.from('#pregunta', { y: 60, autoAlpha: 0, duration: 1, ease: 'power3.out' }, E.e7 + 0.9);
   }
 
-  Motor.iniciar({ duracion: FIN, escenas, subtitulos, audios, construir });
+  Motor.iniciar({ duracion: FIN, escenas, subtitulos, audios, planos, construir });
 })();

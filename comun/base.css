@@ -31,6 +31,11 @@ body.sin-subs #subs{display:none}
 #pista{position:relative;display:flex;flex-direction:column;gap:6px}
 #barra{width:100%;accent-color:var(--oro);height:6px;cursor:pointer}
 #capitulos{display:flex;gap:6px}
+/* Marcas de los comentarios del modo revisión sobre la barra de tiempo */
+#marcas{position:absolute;left:8px;right:8px;top:-22px;height:0}
+#controles #marcas button{position:absolute;top:0;width:22px;height:22px;margin-left:-11px;padding:0;border:2px solid #fff;border-radius:50% 50% 50% 50%;background:#5b6978;color:#fff;font-size:11px;font-weight:700;line-height:1;box-shadow:0 3px 8px rgba(0,0,0,.45)}
+#controles #marcas button:after{content:'';position:absolute;left:50%;top:100%;width:2px;height:7px;margin-left:-1px;background:#fff}
+#controles #marcas button:hover,#controles #marcas button:focus-visible{transform:scale(1.2);z-index:2;outline:2px solid var(--oro);outline-offset:1px}
 #capitulos button{flex:1;padding:4px 6px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#171d3a}
 #capitulos button.activo{background:var(--oro);border-color:var(--oro);color:#fff}
 body.captura #controles{display:none}

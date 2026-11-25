@@ -48,7 +48,9 @@ dd.vacio{color:var(--suave);font-style:italic}
 .video{grid-column:1/-1;background:#fff;border-radius:24px;box-shadow:0 10px 26px rgba(31,40,76,.1);overflow:hidden}
 .video .teja b{font-size:22px;margin-top:5px}
 .video .nota{padding:0 22px 16px;color:var(--suave);max-width:90ch}
-.video iframe{display:block;width:100%;border:0;background:#12172b;height:calc((min(100vw,1320px) - 48px) * .5625 + 86px)}
+.video{container-type:inline-size}
+/* Alto = imagen 16:9 al ancho real de la sección + la barra del reproductor (86 px) */
+.video iframe{display:block;width:100%;border:0;background:#12172b;height:calc((min(100vw,1320px) - 48px) * .5625 + 86px);height:calc(100cqw * .5625 + 86px)}
 @media print{.video{display:none}}
 
 /* Lienzos compuestos (medidas en un escenario de 1920 x 1080) */

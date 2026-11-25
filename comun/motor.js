@@ -4,6 +4,10 @@
    - escenas: [{ t, nombre }] para los capítulos del reproductor y el storyboard.
    - subtitulos: [{ a, b, quien, texto }].
    - audios (opcional): [{ t, dur, src }] pistas de voz que suenan a partir del segundo t.
+   - planos (opcional): [segundos] cambios grandes de imagen o personajes; por defecto, el inicio de cada escena.
+     Los usa el modo revisión: un comentario hecho sobre el video se ve hasta el siguiente cambio de plano.
+   Dentro de un <iframe> el reproductor habla con la página que lo contiene (protocolo rv-media del hub de revisión):
+   informa el tiempo y recibe órdenes de pausa, salto y las marcas de comentarios para la barra de tiempo.
    Parámetros de la URL: ?t=12.5 (abre en ese segundo, en pausa) · ?captura=1 (oculta el reproductor) · ?subs=0. */
 window.Motor = (function () {
   const $ = (s) => document.querySelector(s);
@@ -19,7 +23,7 @@ window.Motor = (function () {
       const k = Math.min(marco.clientWidth / 1920, marco.clientHeight / 1080);
       escenario.style.transform = 'scale(' + k + ')';
     };
-    addEventListener('resize', ajustar); ajustar();
+    addEventListener('resize', () => { ajustar(); if (window.__tl) window.__pintar(); }); ajustar();
 
     const subs = document.createElement('p'); subs.id = 'subs'; subs.setAttribute('aria-live', 'off');
     subs.innerHTML = '<b></b><span></span>'; escenario.appendChild(subs);
@@ -47,6 +51,40 @@ window.Motor = (function () {
         else if (!p.el.paused) p.el.pause();
       });
     }
+    // --- Puente con la página que incrusta el video (modo revisión)
+    const fuera = window.parent !== window;
+    const planos = [...new Set((cfg.planos || cfg.escenas.map((e) => e.t)).map((n) => +n.toFixed(2)))].filter((n) => n > 0 && n < cfg.duracion).sort((a, b) => a - b);
+    const marcas = document.createElement('div'); marcas.id = 'marcas'; $('#pista').prepend(marcas);
+    let pideMarcas = true, ultEnvio = 0;
+    function estado(forzar) {
+      if (!fuera) return;
+      const ahora = performance.now();
+      if (!forzar && ahora - ultEnvio < 100) return;
+      ultEnvio = ahora;
+      const r = escenario.getBoundingClientRect();
+      parent.postMessage({ rvMedia: 1, type: 'state', t: tl.time(), dur: cfg.duracion, paused: tl.paused() || tl.time() >= cfg.duracion, cuts: planos, need: pideMarcas,
+        stage: { x: r.left / innerWidth, y: r.top / innerHeight, w: r.width / innerWidth, h: r.height / innerHeight } }, '*');
+    }
+    function ponerMarcas(items) {
+      marcas.innerHTML = '';
+      items.filter((m) => m && isFinite(m.t)).forEach((m) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = m.num; b.title = fmt(m.t) + ' · ' + (m.label || '');
+        b.style.left = Math.max(0, Math.min(100, m.t / cfg.duracion * 100)) + '%';
+        if (/^#[0-9a-f]{3,8}$/i.test(m.color || '')) b.style.background = m.color;
+        b.addEventListener('click', () => { tl.pause(m.t); pintar(); parent.postMessage({ rvMedia: 1, type: 'marker', id: m.id }, '*'); });
+        marcas.appendChild(b);
+      });
+    }
+    if (fuera) addEventListener('message', (e) => {
+      const d = e.data;
+      if (e.source !== parent || !d || d.rvMedia !== 1) return;
+      if (d.cmd === 'seek') { tl.pause(Math.max(0, Math.min(cfg.duracion, +d.t || 0))); pintar(); }
+      else if (d.cmd === 'pause') { tl.pause(); pintar(); }
+      else if (d.cmd === 'markers') { pideMarcas = false; ponerMarcas(Array.isArray(d.items) ? d.items : []); }
+      else if (d.cmd === 'hello') estado(true);
+    });
+
     let ultimo = null;
     function pintar() {
       const t = tl.time();
@@ -60,6 +98,7 @@ window.Motor = (function () {
         subs.classList.toggle('ver', !!s);
         if (s) { subs.classList.toggle('sin', !s.quien); subs.firstChild.textContent = s.quien || ''; subs.lastChild.textContent = s.texto; }
       }
+      estado(tl.paused());
     }
     tl.eventCallback('onUpdate', pintar);
     tl.eventCallback('onComplete', pintar);

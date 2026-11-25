@@ -170,3 +170,16 @@ body.rv-panel-open { margin-right: 0; }
   .rv-pop { left: 12px !important; right: 12px; width: auto; top: auto !important; bottom: 76px; }
 }
 @media print { #rv-root, .rv-ghost { display: none !important; } }
+
+/* Zona comentable (RV_REVIEW.scope): fuera de ella no se puede señalar */
+body.rv-picking.rv-out, body.rv-picking.rv-out *, body.rv-hiding.rv-out, body.rv-hiding.rv-out * { cursor: not-allowed !important; }
+
+/* Video con línea de tiempo (RV_REVIEW.media) */
+.rv-media-catch { position: fixed; z-index: 2147482970; cursor: crosshair; border: 2px dashed transparent; border-radius: 6px; }
+.rv-media-catch:hover { border-color: var(--rv-gold); background: rgba(212,178,111,.12); }
+.rv-media-catch .rv-hover-label { display: none; }
+.rv-media-catch:hover .rv-hover-label { display: block; }
+.rv-pin.is-media { transition: opacity .35s ease, transform .15s ease; }
+.rv-pin.is-media.is-off { opacity: 0; pointer-events: none; }
+.rv-badge.rv-time { font-variant-numeric: tabular-nums; background: #EEF1F5; color: #16222F; }
+.rv-card.is-now { border-color: var(--rv-gold); box-shadow: 0 0 0 2px var(--rv-gold); }
