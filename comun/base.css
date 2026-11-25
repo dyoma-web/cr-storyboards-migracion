@@ -1,0 +1,46 @@
+/* Base común de las animaciones: tipografías de la línea gráfica, escenario 1920x1080 y reproductor. */
+@font-face{font-family:'Baskervville';font-weight:400;src:url(fonts/Baskervville-Regular.ttf)}
+@font-face{font-family:'Baskervville';font-weight:600;src:url(fonts/Baskervville-SemiBold.ttf)}
+@font-face{font-family:'Baskervville';font-weight:600;font-style:italic;src:url(fonts/Baskervville-SemiBoldItalic.ttf)}
+@font-face{font-family:'Noir Pro';font-weight:400;src:url(fonts/NoirPro-Regular.ttf)}
+@font-face{font-family:'Noir Pro';font-weight:700;src:url(fonts/NoirPro-Bold.ttf)}
+@font-face{font-family:'Neulis';font-weight:400;src:url(fonts/Neulis-Regular.ttf)}
+
+:root{--navy:#1f284c;--oro:#cdaa66;--cinta:#efc445;--cian:#00aeef;--teal:#00a99d;--naranja:#f15a24;--ambar:#ffb300;--crema:#f6f1e7;--tinta:#1f284c}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#12172b;overflow:hidden;font-family:'Noir Pro',system-ui,sans-serif;color:var(--tinta)}
+
+#marco{position:fixed;inset:0 0 86px 0;display:grid;place-items:center;overflow:hidden}
+#escenario{position:absolute;left:50%;top:50%;margin:-540px 0 0 -960px;width:1920px;height:1080px;transform-origin:50% 50%;background:var(--crema);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.escena{position:absolute;inset:0;overflow:hidden}
+
+/* Subtítulos */
+#subs{position:absolute;left:50%;bottom:36px;transform:translateX(-50%);max-width:1560px;width:max-content;display:flex;align-items:center;gap:18px;
+  background:rgba(18,23,43,.9);color:#fff;border-radius:22px;padding:14px 30px 14px 16px;font-size:32px;line-height:1.25;z-index:90;opacity:0;transition:opacity .25s}
+#subs.ver{opacity:1}
+#subs b{flex:none;font-family:'Neulis';font-weight:400;font-size:20px;letter-spacing:.16em;text-transform:uppercase;background:var(--oro);color:#fff;border-radius:99px;padding:8px 18px}
+#subs.sin b{display:none}
+body.sin-subs #subs{display:none}
+
+/* Reproductor */
+#controles{position:fixed;left:0;right:0;bottom:0;height:86px;background:#0c1022;color:#fff;display:grid;grid-template-columns:auto auto 1fr auto auto;align-items:center;gap:18px;padding:0 22px;font-size:15px}
+#controles button{font:inherit;color:#fff;background:#232a4d;border:1px solid #3a4374;border-radius:10px;padding:9px 14px;cursor:pointer}
+#controles button:hover,#controles button:focus-visible{background:#33407a;outline:2px solid var(--oro);outline-offset:2px}
+#btn-play{min-width:104px;font-weight:700}
+#tiempo{font-variant-numeric:tabular-nums;min-width:96px;text-align:center}
+#pista{position:relative;display:flex;flex-direction:column;gap:6px}
+#barra{width:100%;accent-color:var(--oro);height:6px;cursor:pointer}
+#capitulos{display:flex;gap:6px}
+#capitulos button{flex:1;padding:4px 6px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#171d3a}
+#capitulos button.activo{background:var(--oro);border-color:var(--oro);color:#fff}
+body.captura #controles{display:none}
+body.captura #marco{inset:0}
+body.captura{background:#fff}
+
+/* Piezas compartidas */
+.teja{position:relative;display:grid;place-items:center;width:150px;height:150px;filter:drop-shadow(0 8px 10px rgba(31,40,76,.3))}
+.teja:before{content:'';position:absolute;inset:0;background:#fff;clip-path:polygon(50% 0,100% 37%,82% 100%,18% 100%,0 37%)}
+.teja i{position:absolute;inset:11px;clip-path:polygon(50% 0,100% 37%,82% 100%,18% 100%,0 37%)}
+.teja b{position:relative;margin-top:14px;font-weight:700;font-size:64px;color:#fff;line-height:1}
+.rotulo{font-family:'Neulis';letter-spacing:.2em;text-transform:uppercase;color:#8a6a24}
+.puntos{position:absolute;background-image:radial-gradient(var(--oro) 4px,transparent 4.500px);background-size:30px 30px;opacity:.5}

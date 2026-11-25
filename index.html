@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Storyboards de los videos · Curso de regularización migratoria</title>
+<link rel="stylesheet" href="comun/storyboard.css">
+<style>
+  main{grid-template-columns:1fr;gap:16px;max-width:900px}
+  .item{display:flex;align-items:center;gap:18px;background:#fff;border-radius:22px;padding:18px 24px;box-shadow:0 8px 22px rgba(31,40,76,.08);color:inherit;text-decoration:none}
+  a.item:hover,a.item:focus-visible{box-shadow:0 12px 28px rgba(31,40,76,.2);outline:3px solid var(--oro);outline-offset:2px}
+  .item h2{font-family:'Baskervville';font-weight:600;font-size:25px;line-height:1.15;color:var(--navy)}
+  .item p{color:var(--suave);font-size:15.5px}
+  .item .estado{margin-left:auto;flex:none;font-family:'Neulis';letter-spacing:.14em;text-transform:uppercase;font-size:11.5px;border-radius:99px;padding:6px 14px;background:var(--crema);color:#8a6a24}
+  a.item .estado{background:var(--navy);color:#fff}
+  .pendiente{opacity:.62}
+  .aviso{background:#fff;border-left:12px solid var(--oro);border-radius:22px;padding:18px 24px}
+</style>
+</head>
+<body>
+<header class="portada">
+  <span class="puntos" style="right:60px;top:40px;width:270px;height:150px"></span>
+  <p class="rotulo claro">Curso · Promoción de la regularización migratoria de personas estudiantes de origen extranjero</p>
+  <h1>Storyboards de los videos</h1>
+  <p class="subtitulo">Propuesta visual y ejemplo animado de cada video</p>
+</header>
+<main>
+  <p class="aviso" id="aviso" hidden>El modo revisión está activo: en cada storyboard puede dejar comentarios sobre cualquier elemento de la página.</p>
+
+  <a class="item" href="storyboard_0_bienvenida/video-0-bienvenida.html">
+    <span class="teja"><i style="background:var(--cian)"></i><b>0</b></span>
+    <div><h2>Video de bienvenida</h2><p>Una pregunta en la ventanilla · Bloque 1</p></div>
+    <span class="estado">Ver storyboard</span>
+  </a>
+  <div class="item pendiente">
+    <span class="teja"><i style="background:var(--teal)"></i><b>1</b></span>
+    <div><h2>Sala de profesores</h2><p>Video 1</p></div>
+    <span class="estado">En preparación</span>
+  </div>
+  <div class="item pendiente">
+    <span class="teja"><i style="background:var(--naranja)"></i><b>2</b></span>
+    <div><h2>Tres ventanillas</h2><p>Video 2</p></div>
+    <span class="estado">En preparación</span>
+  </div>
+  <div class="item pendiente">
+    <span class="teja"><i style="background:var(--ambar)"></i><b>3</b></span>
+    <div><h2>Don Jorge: reunión informativa</h2><p>Video 3</p></div>
+    <span class="estado">En preparación</span>
+  </div>
+  <div class="item pendiente">
+    <span class="teja"><i style="background:var(--cian)"></i><b>4</b></span>
+    <div><h2>Cierre del curso</h2><p>Video 4</p></div>
+    <span class="estado">En preparación</span>
+  </div>
+</main>
+<script>
+  // Conserva el código de revisión al pasar de la portada a cada storyboard.
+  if (new URLSearchParams(location.search).has('revision')) {
+    document.getElementById('aviso').hidden = false;
+    document.querySelectorAll('a.item').forEach(function (a) { a.href += location.search; });
+  }
+</script>
+</body>
+</html>
