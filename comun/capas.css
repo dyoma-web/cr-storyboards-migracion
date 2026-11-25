@@ -1,0 +1,45 @@
+/* Capas que se superponen a las escenas ilustradas (lienzo de 1920 x 1080).
+   Se usan igual en las viñetas del storyboard y en el animático, por eso viven en un archivo aparte. */
+@font-face{font-family:'Baskervville';font-weight:600;font-style:italic;src:url(fonts/Baskervville-SemiBoldItalic.ttf)}
+.c-fondo{position:absolute;inset:0;background:linear-gradient(#f8f4ea,#f1e9d6)}
+.c-puntos{position:absolute;background-image:radial-gradient(#cdaa66 4px,transparent 4.5px);background-size:30px 30px;opacity:.5}
+
+/* Rótulo corto: fecha, fase, paso */
+.c-chip{position:absolute;white-space:nowrap;background:#1f284c;color:#fff;font-family:'Neulis';letter-spacing:.18em;text-transform:uppercase;font-size:40px;line-height:1.2;border-radius:99px;padding:16px 46px;border:6px solid #fff;box-shadow:0 12px 26px rgba(0,0,0,.28)}
+.c-chip.web{font-family:'Noir Pro';font-weight:700;letter-spacing:.02em;text-transform:none;font-size:46px}
+
+/* Palabra que aparece y se tacha */
+.c-palabra{position:absolute;font-family:'Baskervville';font-weight:600;font-style:italic;font-size:150px;line-height:1;color:#1f284c;background:#fff;border-radius:30px;padding:16px 64px 34px;box-shadow:0 14px 30px rgba(31,40,76,.28)}
+.c-raya{position:absolute;left:34px;right:34px;top:52%;height:18px;border-radius:9px;background:#f15a24;transform-origin:0 50%}
+
+/* Lo que alguien piensa o ha oído */
+.c-frase{position:absolute;white-space:nowrap;background:#fff;color:#1f284c;font-family:'Baskervville';font-weight:600;font-style:italic;font-size:58px;line-height:1.15;border-radius:36px;padding:24px 44px;box-shadow:0 14px 30px rgba(31,40,76,.25)}
+.c-mental{position:absolute;text-align:center;background:#fff;border:6px dashed #cdaa66;border-radius:44px;padding:26px 30px 34px;box-shadow:0 14px 30px rgba(31,40,76,.22)}
+.c-mental .nombre{font-family:'Baskervville';font-weight:600;font-size:104px;line-height:1;color:#1f284c}
+.c-mental .sobre{position:relative;display:inline-block;margin-top:-12px;font-family:'Baskervville';font-weight:600;font-style:italic;font-size:74px;line-height:1;color:#f15a24;background:rgba(255,255,255,.92);border-radius:14px;padding:4px 22px 12px;transform:rotate(-7deg)}
+.c-mental .sobre .c-raya{left:10px;right:10px;height:10px;background:#1f284c}
+.c-cartel{position:absolute;text-align:center;font-family:'Baskervville';font-weight:600;font-size:132px;line-height:1;color:#1f284c}
+
+/* Pregunta de cierre */
+.c-pregunta{position:absolute;background:#1f284c;color:#fff;font-family:'Baskervville';font-size:84px;line-height:1.1;text-align:center;border-radius:40px;padding:44px 56px 52px;border-bottom:14px solid #cdaa66;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.c-pregunta.lisa{background:none;border:0;box-shadow:none;text-align:left;font-size:104px;padding:0}
+
+/* Reloj de pared */
+.c-reloj{position:absolute;width:250px;height:250px}
+.c-reloj svg{width:100%;height:100%;filter:drop-shadow(0 12px 16px rgba(31,40,76,.3))}
+
+/* Íconos que aparecen uno a uno */
+.c-iconos{position:absolute;display:flex;gap:24px}
+.c-icono{display:grid;place-items:center;width:132px;height:132px;border-radius:50%;background:var(--c);border:9px solid #fff;box-shadow:0 12px 24px rgba(31,40,76,.28)}
+.c-icono svg{width:70px;height:70px}
+
+/* Recuadros para pantallas divididas */
+.c-panel{position:absolute;overflow:hidden;border-radius:34px;border:10px solid #fff;background-size:cover;background-repeat:no-repeat;box-shadow:0 16px 34px rgba(31,40,76,.28)}
+.c-panel .c-chip{left:50%;bottom:26px;transform:translateX(-50%);font-size:32px;padding:12px 34px}
+.c-panel .num{position:absolute;left:20px;top:20px;display:grid;place-items:center;width:78px;height:78px;border-radius:50%;background:#1f284c;color:#fff;font-weight:700;font-size:42px;border:5px solid #fff}
+.c-panel.tenue{opacity:.38;border-width:6px;border-radius:22px}
+
+/* Las cuatro fases */
+.c-fases{position:absolute;display:flex;justify-content:space-between}
+.c-fases:before{content:'';position:absolute;left:60px;right:60px;top:50%;height:12px;margin-top:-6px;border-radius:9px;background:#cdaa66}
+.c-fase{position:relative;background:var(--c);color:#fff;font-weight:700;font-size:40px;line-height:1.2;border-radius:99px;padding:20px 40px;border:7px solid #fff;box-shadow:0 12px 24px rgba(31,40,76,.25)}

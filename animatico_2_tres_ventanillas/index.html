@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Animático · Video 2: Tres ventanillas</title>
+<link rel="stylesheet" href="../comun/base.css">
+<link rel="stylesheet" href="../comun/capas.css">
+<style>
+  .escena{background:#12172b}
+  .plano{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%}
+</style>
+</head>
+<body>
+<!-- Generado por generar.mjs a partir de guiones/videos.mjs. -->
+<div id="marco"><div id="escenario"></div></div>
+<div id="controles">
+  <button id="btn-play" type="button">▶ Reproducir</button>
+  <span id="tiempo">0:00</span>
+  <div id="pista"><input id="barra" type="range" min="0" value="0" aria-label="Posición del video"><div id="capitulos"></div></div>
+  <button id="btn-subs" type="button">Subtítulos</button>
+  <button id="btn-pantalla" type="button">Pantalla completa</button>
+</div>
+<script src="../comun/lib/gsap.min.js"></script>
+<script src="../comun/motor.js"></script>
+<script src="audio/duraciones.js"></script>
+<script src="datos.js"></script>
+<script src="../comun/animatico.js"></script>
+</body>
+</html>
