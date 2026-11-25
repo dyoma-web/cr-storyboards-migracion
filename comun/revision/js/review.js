@@ -19,7 +19,8 @@
      trato,               // 'vos' (por defecto, Argentina) o 'usted' (Costa Rica, Colombia…)
      locale,              // formato de fechas: 'es-AR' por defecto, 'es-CR', 'es-CO'…
      scope,               // selector CSS: solo se puede comentar dentro de esos elementos (opcional)
-     media                // selector de los <iframe> con video que hablan el protocolo rv-media (opcional)
+     media,               // selector de los <iframe> con video que hablan el protocolo rv-media (opcional)
+     deleteAny            // true: cualquier participante puede eliminar cualquier comentario (requiere rv_sites.delete_any)
    };
    ========================================================================== */
 (function () {
@@ -237,6 +238,25 @@
   function infoModal(t, p) {
     return modal(`<h2 class="rv-h">${esc(t)}</h2><p>${esc(p)}</p><div class="rv-actions"><button class="rv-b rv-b-p" data-ok>Entendido</button></div>`,
       (m, done) => $('[data-ok]', m).onclick = () => done());
+  }
+  // Eliminar pide dos confirmaciones: marcar la casilla y pulsar el botón. El aviso no usa segunda persona.
+  function confirmDelete(c) {
+    const ajeno = c.author_id !== S.me.id;
+    const extra = [c.replies.length ? c.replies.length + (c.replies.length > 1 ? ' respuestas' : ' respuesta') : '', c.voters.length ? c.voters.length + (c.voters.length > 1 ? ' votos' : ' voto') : ''].filter(Boolean).join(' y ');
+    return modal(`
+      <h2 class="rv-h">Eliminar el comentario #${c.num}</h2>
+      <p>Se va a borrar ${ajeno ? 'un comentario de <strong>' + esc(c.author_name) + '</strong>' : 'este comentario'}${extra ? ', junto con ' + extra : ''}:</p>
+      <div class="rv-box"><p>${esc((c.proposal || c.body || '').slice(0, 220))}${(c.proposal || c.body || '').length > 220 ? '…' : ''}</p></div>
+      <p class="rv-warn"><strong>Esta acción es irreversible.</strong> El comentario desaparece para todas las personas de la sesión y no se puede recuperar desde aquí.</p>
+      <label class="rv-check"><input type="checkbox" data-sure> Entiendo que esta acción no se puede deshacer</label>
+      <div class="rv-actions"><button type="button" class="rv-b" data-cancel>Cancelar</button><button type="button" class="rv-b rv-b-del" data-ok disabled>Eliminar definitivamente</button></div>`, (m, done) => {
+      const ok = $('[data-ok]', m);
+      $('[data-sure]', m).onchange = (e) => { ok.disabled = !e.target.checked; };
+      ok.onclick = () => done(true);
+      $('[data-cancel]', m).onclick = () => done(false);
+      m.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); done(false); } });
+      setTimeout(() => $('[data-cancel]', m).focus(), 0);
+    });
   }
   function askCode(wrong) {
     return modal(`
@@ -895,7 +915,7 @@
         <div style="display:flex;flex-wrap:wrap;gap:8px">
           <button type="button" class="rv-b rv-vote" data-rv-vote aria-pressed="${voted}" title="${esc(c.voters.map((v) => v.name).join(', ') || 'Sin votos')}">${ic('up')}${voted ? 'Votado' : 'Votar'} · ${c.voters.length}</button>
           <button type="button" class="rv-b" data-goto>${ic('target')}Ir al elemento</button>
-          ${mine && !S.editing ? `<button type="button" class="rv-b" data-edit-btn>Editar</button><button type="button" class="rv-b rv-b-danger" data-del>Eliminar</button>` : ''}
+          ${mine && !S.editing ? `<button type="button" class="rv-b" data-edit-btn>Editar</button>` : ''}${(mine || CFG.deleteAny) && !S.editing ? `<button type="button" class="rv-b rv-b-danger" data-del>Eliminar</button>` : ''}
         </div>
         ${c.voters.length ? `<p style="margin:0;font-size:12.5px;color:#5B6978">Votaron: ${esc(c.voters.map((v) => v.name).join(', '))}</p>` : ''}
         <dl class="rv-meta">
@@ -938,8 +958,12 @@
     }
     const del = $('[data-del]', panel);
     if (del) del.onclick = async () => {
-      if (!confirm(`¿Eliminar el comentario #${c.num}? No se puede deshacer.`)) return;
-      try { await rpc('review_delete_comment', { p_code: S.code, p_id: c.id, p_author: S.me.id }); S.view = 'list'; S.detail = null; await reload(); notify('delete', c); toast('Comentario eliminado'); } catch (e) { toast('No se pudo eliminar'); }
+      if (!(await confirmDelete(c))) return;
+      try {
+        const ok = await rpc('review_delete_comment', { p_code: S.code, p_id: c.id, p_author: S.me.id });
+        if (ok === false) { toast('No se pudo eliminar: solo quien escribió el comentario puede borrarlo'); return; }
+        S.view = 'list'; S.detail = null; await reload(); notify('delete', c); toast(`Comentario #${c.num} eliminado`);
+      } catch (e) { toast('No se pudo eliminar'); }
     };
     const rpf = $('[data-reply]', panel);
     rpf.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); rpf.requestSubmit(); } });

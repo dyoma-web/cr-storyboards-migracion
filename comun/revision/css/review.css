@@ -183,3 +183,10 @@ body.rv-picking.rv-out, body.rv-picking.rv-out *, body.rv-hiding.rv-out, body.rv
 .rv-pin.is-media.is-off { opacity: 0; pointer-events: none; }
 .rv-badge.rv-time { font-variant-numeric: tabular-nums; background: #EEF1F5; color: #16222F; }
 .rv-card.is-now { border-color: var(--rv-gold); box-shadow: 0 0 0 2px var(--rv-gold); }
+
+/* Confirmación para eliminar un comentario */
+.rv-warn { padding: 10px 14px; border-radius: 12px; background: #FDECEC; color: #8E1B1F !important; border-left: 5px solid #C62A2F; }
+.rv-check { display: flex; align-items: flex-start; gap: 10px; font-weight: 700; cursor: pointer; }
+.rv-check input { width: 18px; height: 18px; margin-top: 2px; accent-color: #C62A2F; flex: none; }
+.rv-b-del { background: #C62A2F; border-color: #C62A2F; color: #fff; }
+.rv-b-del:disabled { opacity: .45; cursor: not-allowed; }
