@@ -60,7 +60,7 @@
     pasa('#e2', '#e4', E.e4, 0.7);
     tl.from('#linea', { scaleX: 0, duration: 1.4, ease: 'power2.inOut' }, E.e4 + 0.9);
     tl.set('.verbo', { autoAlpha: 0, y: 50 }, E.e4);
-    [['#i-mep', 2.6, 0.3], ['#i-dgme', 3.5, 2.0], ['#i-pani', 4.4, 3.7]].forEach(([s, entra, verbo]) => {
+    [['#i-mep', 2.2, 0.5], ['#i-dgme', 2.9, 2.8], ['#i-pani', 4.2, 4.6]].forEach(([s, entra, verbo]) => {
       tl.from(s + ' .ficha-i', { scale: 0, rotation: -30, duration: 0.8, ease: 'back.out(1.8)' }, VOZ.g5 + entra);
       tl.from(s + ' strong', { y: 30, autoAlpha: 0, duration: 0.5 }, VOZ.g5 + entra + 0.35);
       tl.to(s + ' .verbo', { autoAlpha: 1, y: 0, duration: 0.6, ease: 'back.out(1.7)' }, VOZ.g6 + verbo);
