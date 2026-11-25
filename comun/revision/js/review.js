@@ -540,6 +540,7 @@
           stage: { x: +g.x || 0, y: +g.y || 0, w: +g.w || 1, h: +g.h || 1 }
         });
         if (d.need) syncMarkers();
+        if (mediaPending.has(el)) { mediaPost(el, { cmd: 'seek', t: mediaPending.get(el), pause: true }); mediaPending.delete(el); }
         markNow(); schedulePins();
       } else if (d.type === 'marker' && S.all.some((c) => c.id === d.id)) { openPanel(); showDetail(d.id, true); }
     });
@@ -547,6 +548,14 @@
       mediaPost(el, { cmd: 'hello' });
       el.addEventListener('load', () => { MEDIA.delete(el); mediaPost(el, { cmd: 'hello' }); });
     });
+  }
+  // Lleva el video al segundo del comentario y lo pausa. Si el reproductor aún no cargó, lo hace en cuanto avise.
+  const mediaPending = new Map();
+  function mediaSeek(c) {
+    const el = locate(c);
+    if (!el) return;
+    if (MEDIA.has(el)) mediaPost(el, { cmd: 'seek', t: c.media_t, pause: true });
+    else mediaPending.set(el, c.media_t);
   }
   function stageRect(el) {
     const st = MEDIA.get(el);
@@ -888,13 +897,18 @@
     const q = $('#rv-q', panel);
     q.oninput = () => { S.q = q.value; renderPanel(); };
     if (keepFocus) { const nq = $('#rv-q', panel); nq.focus(); nq.setSelectionRange(nq.value.length, nq.value.length); }
-    $$('.rv-card', panel).forEach((b) => b.onclick = () => showDetail(b.dataset.id));
+    // Al elegir un comentario de la lista, la página va hasta su elemento (y el video, a su momento).
+    $$('.rv-card', panel).forEach((b) => b.onclick = () => {
+      showDetail(b.dataset.id);
+      const c = S.all.find((x) => x.id === b.dataset.id);
+      if (c && c.page === PAGE) goTo(c);
+    });
   }
   function showDetail(id, noSeek) {
     S.view = 'detail'; S.detail = id; S.resolving = false; S.editing = false; renderPanel(); layoutPins();
     // Un comentario de video lleva el reproductor a su momento y lo deja en pausa para leerlo con calma.
     const c = S.all.find((x) => x.id === id);
-    if (!noSeek && c && c.media_t != null && c.page === PAGE) { const el = locate(c); if (el && MEDIA.has(el)) mediaPost(el, { cmd: 'seek', t: c.media_t, pause: true }); }
+    if (!noSeek && c && c.media_t != null && c.page === PAGE) mediaSeek(c);
   }
   function renderDetail() {
     const c = S.all.find((x) => x.id === S.detail);
@@ -984,6 +998,7 @@
     const el = locate(c);
     if (!isShown(el)) { toast('Ese elemento no está visible ahora (puede estar en otro paso o pestaña)'); return; }
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (c.media_t != null) mediaSeek(c);
     el.classList.add('rv-flash');
     setTimeout(() => el.classList.remove('rv-flash'), 1800);
   }
