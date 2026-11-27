@@ -83,7 +83,7 @@ dd.vacio{color:var(--suave);font-style:italic}
 .ficha-i svg{width:128px;height:128px}
 .inst strong{display:block;margin-top:34px;font-family:'Neulis';font-weight:400;letter-spacing:.2em;font-size:54px;color:var(--navy)}
 
-.e-guias{background:linear-gradient(#f8f4ea,#f1e9d6)}
+.e-guias{background:linear-gradient(#cfe8f4,#b3d9ec)}
 .cinta-g{position:absolute;left:0;top:60px;width:1920px;height:620px}
 .guia{position:absolute;bottom:330px;height:600px;transform:translateX(-50%)}
 .titulo-5{position:absolute;left:0;right:0;top:772px;text-align:center;font-size:36px}

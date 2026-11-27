@@ -1,10 +1,10 @@
 /* Animático del video de bienvenida: las viñetas del storyboard con cámara suave, entradas sencillas y voces.
-   Textos del Guion_Video_0_Bienvenida_v3. Los tiempos siguen a la locución real (sin los silencios largos del guion),
-   así que el video dura cerca de 1:12 en lugar de 1:30. */
+   Textos del Guion_Video_0_Bienvenida_v3. Los tiempos siguen a la locución real, con medio segundo entre frases
+   (en la revisión se pidió un ritmo más ágil y pausas más cortas), así que el video dura 1:02 en lugar de 1:30. */
 (function () {
   /* Inicio de cada escena y de cada pista de voz, en segundos. */
-  const E = { e1: 0, e2: 8.2, e3: 15.8, e4: 26.6, e5: 45.2, e6: 62.2, e7: 67.6 }, FIN = 72;
-  const VOZ = { g1: 1.0, g2: 3.4, m1: 10.8, g3: 16.8, g4: 20.3, g5: 27.8, g6: 38.6, g7: 46.2, g8: 54.1, g9: 63.2 };
+  const E = { e1: 0, e2: 6.4, e3: 11.3, e4: 20.6, e5: 37.0, e6: 53.6, e7: 58.5 }, FIN = 62;
+  const VOZ = { g1: 0.6, g2: 2.4, m1: 7.4, g3: 12.0, g4: 15.1, g5: 21.3, g6: 31.1, g7: 37.7, g8: 45.5, g9: 54.3 };
   const D = window.AUDIO || {};
   /* Cambios grandes de imagen o personajes: el inicio de cada escena, la entrada de las siluetas y la de los bloques. */
   const planos = [E.e2, E.e3, VOZ.g3 - 0.3, E.e4, E.e5, VOZ.g8 + 0.2, E.e6, E.e7];
